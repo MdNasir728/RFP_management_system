@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import vendorRoutes from "./modules/vendor/vendor.routes";
 import rfpRoutes from "./modules/rfp/rfp.routes";
+import emailRoutes from "./modules/email/email.routes";
 
 const router = Router();
 
@@ -23,5 +24,10 @@ router.use("/vendors", vendorRoutes);
  * RFP management routes
  */
 router.use("/rfps", rfpRoutes);
+
+/**
+ * Email sending routes
+ */
+router.use("/emails", emailRoutes);
 
 export default router;
