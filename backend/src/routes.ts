@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import vendorRoutes from "./modules/vendor/vendor.routes";
 import rfpRoutes from "./modules/rfp/rfp.routes";
 import emailRoutes from "./modules/email/email.routes";
+import proposalRoutes from "./modules/proposal/proposal.routes";
 
 const router = Router();
 
@@ -29,5 +30,10 @@ router.use("/rfps", rfpRoutes);
  * Email sending routes
  */
 router.use("/emails", emailRoutes);
+
+/**
+ * Proposal / inbound email routes
+ */
+router.use("/proposals", proposalRoutes);
 
 export default router;
