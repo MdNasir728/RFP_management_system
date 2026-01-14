@@ -3,6 +3,7 @@ import vendorRoutes from "./modules/vendor/vendor.routes";
 import rfpRoutes from "./modules/rfp/rfp.routes";
 import emailRoutes from "./modules/email/email.routes";
 import proposalRoutes from "./modules/proposal/proposal.routes";
+import evaluationRoutes from "./modules/evaluation/evaluation.routes";
 
 const router = Router();
 
@@ -35,5 +36,10 @@ router.use("/emails", emailRoutes);
  * Proposal / inbound email routes
  */
 router.use("/proposals", proposalRoutes);
+
+/**
+ * Proposal evaluation routes
+ */
+router.use("/evaluation", evaluationRoutes);
 
 export default router;
