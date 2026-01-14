@@ -1,10 +1,11 @@
 import { Router, Request, Response } from "express";
+import vendorRoutes from "./modules/vendor/vendor.routes";
+import rfpRoutes from "./modules/rfp/rfp.routes";
 
 const router = Router();
 
 /**
  * Health check endpoint
- * Useful for sanity checks and demos.
  */
 router.get("/health", (_req: Request, res: Response) => {
   res.json({
@@ -14,9 +15,13 @@ router.get("/health", (_req: Request, res: Response) => {
 });
 
 /**
- * Feature modules will be mounted here
- * Example:
- * router.use("/rfps", rfpRoutes);
+ * Vendor management routes
  */
+router.use("/vendors", vendorRoutes);
+
+/**
+ * RFP management routes
+ */
+router.use("/rfps", rfpRoutes);
 
 export default router;

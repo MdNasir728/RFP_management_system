@@ -9,10 +9,7 @@
     /* Paths & Output */
     "rootDir": "src",
     "outDir": "dist",
-    "baseUrl": ".",
-    "paths": {
-      "@shared/*": ["../shared/*"]
-    },
+    
 
     /* Interop & Module Handling */
     "esModuleInterop": true,
