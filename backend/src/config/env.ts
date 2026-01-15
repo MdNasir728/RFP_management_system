@@ -2,30 +2,53 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+interface EnvConfig {
+  NODE_ENV: string;
+  PORT: number;
+  MONGODB_URI: string;
+
+  // Gmail
+  GMAIL_CLIENT_ID: string;
+  GMAIL_CLIENT_SECRET: string;
+  GMAIL_REFRESH_TOKEN: string;
+
+  // AI
+  AI_PROVIDER: "OPENAI" | "LLAMA";
+
+  OLLAMA_API_URL?: string;
+  OLLAMA_MODEL?: string;
+
+   OPENAI_API_KEY?: string;
+  OPENAI_MODEL?: string;
+}
+
 /**
- * Centralized environment variable access.
- * Fails fast if required variables are missing.
+ * Helper to require env variables
  */
-const getEnv = (key: string, required = true): string => {
+const requireEnv = (key: string): string => {
   const value = process.env[key];
-
-  if (!value && required) {
-    throw new Error(`❌ Missing required environment variable: ${key}`);
+  if (!value) {
+    throw new Error(`Missing environment variable: ${key}`);
   }
-
-  return value as string;
+  return value;
 };
 
-export const env = {
+export const env: EnvConfig = {
   NODE_ENV: process.env.NODE_ENV || "development",
-  PORT: Number(getEnv("PORT", false)) || 4000,
+  PORT: Number(process.env.PORT || 4000),
+  MONGODB_URI: requireEnv("MONGODB_URI"),
 
-  MONGODB_URI: getEnv("MONGODB_URI"),
+  // Gmail
+  GMAIL_CLIENT_ID: requireEnv("GMAIL_CLIENT_ID"),
+  GMAIL_CLIENT_SECRET: requireEnv("GMAIL_CLIENT_SECRET"),
+  GMAIL_REFRESH_TOKEN: requireEnv("GMAIL_REFRESH_TOKEN"),
 
-  // Placeholders for future modules
-  GMAIL_CLIENT_ID: getEnv("GMAIL_CLIENT_ID", false),
-  GMAIL_CLIENT_SECRET: getEnv("GMAIL_CLIENT_SECRET", false),
-  GMAIL_REFRESH_TOKEN: getEnv("GMAIL_REFRESH_TOKEN", false),
+  // AI
+  AI_PROVIDER: (process.env.AI_PROVIDER as "OPENAI" | "LLAMA") || "LLAMA",
 
-  AI_PROVIDER: getEnv("AI_PROVIDER", false)
+  OLLAMA_API_URL: process.env.OLLAMA_API_URL,
+  OLLAMA_MODEL: process.env.OLLAMA_MODEL,
+
+  OPENAI_API_KEY: requireEnv("OPENAI_API_KEY"),
+  OPENAI_MODEL: process.env.OPENAI_MODEL || "gpt-4o-mini"
 };

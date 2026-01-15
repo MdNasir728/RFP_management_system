@@ -1,13 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import {
-  createRfpFromText,
+  createRfp,
   getAllRfps,
   getRfpById
 } from "./rfp.service";
-import { CreateRfpInput } from "../../shared";
 
 /**
- * Create RFP from natural language input
+ * Create RFP from raw text
  * POST /api/rfps
  */
 export const createRfpHandler = async (
@@ -16,16 +15,18 @@ export const createRfpHandler = async (
   next: NextFunction
 ): Promise<Response | void> => {
   try {
-    const payload: CreateRfpInput = req.body;
+    const { rawText } = req.body as { rawText?: string };
 
-    if (!payload?.rawText || payload.rawText.trim().length < 10) {
+    if (!rawText || rawText.trim().length < 10) {
       return res.status(400).json({
         success: false,
-        error: { message: "RFP description is required (min 10 chars)" }
+        error: {
+          message: "rawText is required and must be at least 10 characters"
+        }
       });
     }
 
-    const rfp = await createRfpFromText(payload);
+    const rfp = await createRfp(rawText);
 
     return res.status(201).json({
       success: true,
@@ -48,7 +49,7 @@ export const getAllRfpsHandler = async (
   try {
     const rfps = await getAllRfps();
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       data: rfps
     });
@@ -67,16 +68,20 @@ export const getRfpByIdHandler = async (
   next: NextFunction
 ): Promise<Response | void> => {
   try {
-    const rfp = await getRfpById(req.params.id);
+    const { id } = req.params;
+
+    const rfp = await getRfpById(id);
 
     if (!rfp) {
       return res.status(404).json({
         success: false,
-        error: { message: "RFP not found" }
+        error: {
+          message: "RFP not found"
+        }
       });
     }
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       data: rfp
     });

@@ -1,14 +1,24 @@
 import { google } from "googleapis";
-import { env } from "../../config/env";
 import { ProposalModel } from "./proposal.model";
 import { mapProposalDocumentToProposal } from "./proposal.mapper";
 import { VendorModel } from "../vendor/vendor.model";
 import { RfpModel } from "../rfp/rfp.model";
-import { RfpStatus, AiConfidenceLevel, Proposal } from "../../shared";
+import { RfpStatus, Proposal } from "../../shared";
+import { env } from "../../config/env";
 
-/**
- * Initialize Gmail client
- */
+/* AI imports */
+import { callOllama } from "../../ai/ai.client";
+import {
+  SYSTEM_JSON_ONLY_PROMPT,
+  buildProposalParsingPrompt
+} from "../../ai/ai.prompts";
+import {
+  parseJsonStrict,
+  validateParsedProposal
+} from "../../ai/ai.parsers";
+
+/* ---------------- GMAIL CLIENT ---------------- */
+
 const oAuth2Client = new google.auth.OAuth2(
   env.GMAIL_CLIENT_ID,
   env.GMAIL_CLIENT_SECRET
@@ -23,92 +33,118 @@ const gmail = google.gmail({
   auth: oAuth2Client
 });
 
-/**
- * TEMP AI PARSER (Mock)
- * --------------------
- * Converts messy vendor email text into structured proposal data.
- * Will be replaced with real AI parsing later.
- */
-const mockAiParseProposal = async (emailBody: string) => {
-  return {
-    confidence: AiConfidenceLevel.MEDIUM,
-    missingFields: [],
-    notes: emailBody.slice(0, 200)
-  };
-};
+/* ---------------- SERVICE ---------------- */
 
 /**
- * Fetch vendor replies from Gmail inbox and create proposals.
+ * Fetch vendor replies from Gmail and create proposals
  */
 export const fetchVendorRepliesAndCreateProposals =
   async (): Promise<Proposal[]> => {
-    const proposals: Proposal[] = [];
+    const created: Proposal[] = [];
 
-    // Fetch latest emails (simple demo approach)
-    const res = await gmail.users.messages.list({
+    // Existing proposals (for deduplication)
+    const existing = await ProposalModel.find({});
+    const existingPairs = new Set(
+      existing.map((p) => `${p.rfpId}_${p.vendorId}`)
+    );
+
+    // 1️⃣ Fetch emails containing RFP-ID
+    const listRes = await gmail.users.messages.list({
       userId: "me",
       q: "RFP-ID:",
-      maxResults: 10
+      maxResults: 20
     });
 
-    const messages = res.data.messages || [];
+    const messages = listRes.data.messages || [];
 
-    for (const message of messages) {
+    for (const msgMeta of messages) {
       const msg = await gmail.users.messages.get({
         userId: "me",
-        id: message.id!
+        id: msgMeta.id!
       });
 
       const headers = msg.data.payload?.headers || [];
 
-      const fromHeader = headers.find((h) => h.name === "From")?.value;
-      const subjectHeader = headers.find((h) => h.name === "Subject")?.value;
+      const subject =
+        headers.find((h) => h.name === "Subject")?.value || "";
+      const from =
+        headers.find((h) => h.name === "From")?.value || "";
 
-      if (!fromHeader || !subjectHeader) continue;
+      // 2️⃣ Extract RFP ID from subject
+      const match = subject.match(/RFP-ID:([a-f0-9]+)/i);
+      if (!match) continue;
 
-      // Extract RFP ID from subject
-      const rfpIdMatch = subjectHeader.match(/RFP-ID:([a-f0-9]+)/i);
-      if (!rfpIdMatch) continue;
+      const rfpId = match[1];
 
-      const rfpId = rfpIdMatch[1];
+      // 3️⃣ Find vendor by sender email
+      const senderEmail =
+        from.match(/<(.+)>/)?.[1] || from;
 
       const vendor = await VendorModel.findOne({
-        email: fromHeader.match(/<(.+)>/)?.[1] || fromHeader,
-        isActive: true
+        email: senderEmail
       });
 
       if (!vendor) continue;
 
-      const rfp = await RfpModel.findById(rfpId);
-      if (!rfp) continue;
+      const dedupeKey = `${rfpId}_${vendor._id.toString()}`;
+      if (existingPairs.has(dedupeKey)) continue;
 
-      // Extract email body (plain text only, demo-safe)
+      // 4️⃣ Extract email body (plain text)
       const bodyData =
         msg.data.payload?.body?.data ||
         msg.data.payload?.parts?.[0]?.body?.data;
 
       if (!bodyData) continue;
 
-      const emailBody = Buffer.from(bodyData, "base64").toString("utf-8");
+      const proposalText = Buffer.from(
+        bodyData,
+        "base64"
+      ).toString("utf-8");
 
-      // AI parsing (mock)
-      const parsedData = await mockAiParseProposal(emailBody);
+      const rfp = await RfpModel.findById(rfpId);
+      if (!rfp) continue;
 
+      // 5️⃣ AI PARSING (REAL)
+      let parsedData;
+
+      try {
+        const aiResponse = await callOllama(
+          buildProposalParsingPrompt(
+            proposalText,
+            rfp.rawText
+          ),
+          SYSTEM_JSON_ONLY_PROMPT
+        );
+
+        const parsed = parseJsonStrict<any>(aiResponse);
+        parsedData = validateParsedProposal(parsed);
+      } catch (err) {
+        parsedData = {
+          pricing: null,
+          deliveryTimeline: null,
+          paymentTerms: null,
+          warranty: null,
+          confidence: "LOW",
+          missingFields: ["AI parsing failed"]
+        };
+      }
+
+      // 6️⃣ Save proposal
       const proposalDoc = await ProposalModel.create({
         rfpId,
         vendorId: vendor._id.toString(),
-        rawResponseText: emailBody,
+        rawResponseText: proposalText,
         parsedData
       });
 
-      proposals.push(mapProposalDocumentToProposal(proposalDoc));
+      created.push(mapProposalDocumentToProposal(proposalDoc));
 
-      // Update RFP status
+      // 7️⃣ Update RFP status
       if (rfp.status === RfpStatus.SENT) {
         rfp.status = RfpStatus.RESPONSES_RECEIVED;
         await rfp.save();
       }
     }
 
-    return proposals;
+    return created;
   };

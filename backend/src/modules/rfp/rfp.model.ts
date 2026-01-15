@@ -1,58 +1,53 @@
 import { Schema, model, Document } from "mongoose";
 import { RfpStatus } from "../../shared";
 
-/**
- * MongoDB document shape for RFP.
- * This represents how RFPs are stored in the database.
- */
 export interface RfpDocument extends Document {
   title: string;
   rawText: string;
-  structuredData: Record<string, any>;
+  structuredData: any;
   status: RfpStatus;
   vendorIds: string[];
   sentToEmails: string[];
   sentAt?: Date;
+  evaluationResult?: {
+    recommendedVendorId: string;
+    scores: {
+      vendorId: string;
+      score: number;
+      reasoning: string;
+    }[];
+    evaluatedAt: Date;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
 
 const rfpSchema = new Schema<RfpDocument>(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    rawText: {
-      type: String,
-      required: true
-    },
-    structuredData: {
-      type: Schema.Types.Mixed,
-      required: true
-    },
+    title: { type: String, required: true },
+    rawText: { type: String, required: true },
+    structuredData: { type: Schema.Types.Mixed },
     status: {
       type: String,
       enum: Object.values(RfpStatus),
-      required: true,
-      default: RfpStatus.DRAFT
+      required: true
     },
-    vendorIds: {
-      type: [String],
-      default: []
-    },
-    sentToEmails: {
-      type: [String],
-      default: []
-    },
-    sentAt: {
-      type: Date
+    vendorIds: [String],
+    sentToEmails: [String],
+    sentAt: Date,
+    evaluationResult: {
+      recommendedVendorId: String,
+      scores: [
+        {
+          vendorId: String,
+          score: Number,
+          reasoning: String
+        }
+      ],
+      evaluatedAt: Date
     }
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
 
 export const RfpModel = model<RfpDocument>("Rfp", rfpSchema);

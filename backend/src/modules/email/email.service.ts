@@ -4,6 +4,14 @@ import { RfpModel } from "../rfp/rfp.model";
 import { VendorModel } from "../vendor/vendor.model";
 import { RfpStatus } from "../../shared";
 
+
+if (
+  !env.GMAIL_CLIENT_ID ||
+  !env.GMAIL_CLIENT_SECRET ||
+  !env.GMAIL_REFRESH_TOKEN
+) {
+  throw new Error("❌ Gmail OAuth credentials are missing in .env");
+}
 /**
  * Initialize Gmail OAuth2 client
  */
