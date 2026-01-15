@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EvaluationResult } from "@/types/api.types";
@@ -9,13 +11,19 @@ interface RecommendationCardProps {
 export function RecommendationCard({
   evaluation
 }: RecommendationCardProps) {
+  const recommendedScore = evaluation.scores.find(
+    (s) =>
+      s.vendorId ===
+      evaluation.recommendedVendorId
+  );
+
   return (
     <Card className="border-green-500">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           AI Recommendation
           <Badge className="bg-green-600 text-white">
-            Final
+            Final Decision
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -31,32 +39,58 @@ export function RecommendationCard({
           </p>
         </div>
 
-        {/* Scoring Breakdown */}
+        {/* Reasoning */}
+        {recommendedScore && (
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground">
+              Reasoning
+            </h3>
+            <p className="mt-1 text-sm">
+              {recommendedScore.reasoning}
+            </p>
+          </div>
+        )}
+
+        {/* Score Summary */}
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
-            Scoring Breakdown
+          <h3 className="text-sm font-semibold text-muted-foreground">
+            Scoring Summary
           </h3>
 
-          <div className="space-y-2">
-            {evaluation.scores.map((score) => (
-              <div
-                key={score.vendorId}
-                className="rounded-md border p-3"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs">
-                    {score.vendorId}
-                  </span>
-                  <Badge variant="outline">
-                    Score: {score.score}
-                  </Badge>
-                </div>
+          <div className="mt-2 space-y-2">
+            {evaluation.scores.map((score) => {
+              const isWinner =
+                score.vendorId ===
+                evaluation.recommendedVendorId;
 
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {score.reasoning}
-                </p>
-              </div>
-            ))}
+              return (
+                <div
+                  key={score.vendorId}
+                  className={`rounded-md border p-3 ${
+                    isWinner
+                      ? "border-green-500 bg-green-50"
+                      : ""
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs">
+                      {score.vendorId}
+                    </span>
+                    <Badge
+                      variant={
+                        isWinner ? "default" : "outline"
+                      }
+                    >
+                      {score.score}/100
+                    </Badge>
+                  </div>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {score.reasoning}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </CardContent>

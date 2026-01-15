@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Rfp } from "@/types/api.types";
 import { Badge } from "@/components/ui/badge";
@@ -22,42 +23,46 @@ export function RfpCard({ rfp, onRefresh }: RfpCardProps) {
   const [openSend, setOpenSend] = useState(false);
 
   return (
-    <div className="rounded-lg border p-4 space-y-3">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <h3 className="font-medium leading-snug">
-          {rfp.title}
-        </h3>
+    <>
+      <Link href={`/rfp/${rfp._id}`} className="block">
+        <div className="rounded-lg border p-4 space-y-3 hover:bg-muted cursor-pointer">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <h3 className="font-medium leading-snug">
+              {rfp.title}
+            </h3>
 
-        <Badge className={statusColorMap[rfp.status]}>
-          {rfp.status.replaceAll("_", " ")}
-        </Badge>
-      </div>
+            <Badge className={statusColorMap[rfp.status]}>
+              {rfp.status.replaceAll("_", " ")}
+            </Badge>
+          </div>
 
-      {/* Meta */}
-      <div className="text-sm text-muted-foreground">
-        Created on{" "}
-        {new Date(rfp.createdAt).toLocaleDateString()}
-      </div>
+          <div className="text-sm text-muted-foreground">
+            Created on{" "}
+            {new Date(rfp.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+      </Link>
 
-      {/* Actions */}
+      {/* Action outside link */}
       {rfp.status === "DRAFT" && (
-        <Button
-          size="sm"
-          className="w-full"
-          onClick={() => setOpenSend(true)}
-        >
-          Send to Vendors
-        </Button>
+        <div className="mt-2">
+          <Button
+            size="sm"
+            className="w-full"
+            onClick={() => setOpenSend(true)}
+          >
+            Send to Vendors
+          </Button>
+        </div>
       )}
 
-      {/* Send RFP Dialog */}
       <SendRfpDialog
         open={openSend}
         onOpenChange={setOpenSend}
         rfp={rfp}
         onSuccess={onRefresh}
       />
-    </div>
+    </>
   );
 }

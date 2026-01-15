@@ -4,7 +4,9 @@ import { RfpModel } from "../rfp/rfp.model";
 import { VendorModel } from "../vendor/vendor.model";
 import { RfpStatus } from "../../shared";
 
-
+/* ------------------------------------------------------------------ */
+/* ENV VALIDATION */
+/* ------------------------------------------------------------------ */
 if (
   !env.GMAIL_CLIENT_ID ||
   !env.GMAIL_CLIENT_SECRET ||
@@ -12,9 +14,10 @@ if (
 ) {
   throw new Error("❌ Gmail OAuth credentials are missing in .env");
 }
-/**
- * Initialize Gmail OAuth2 client
- */
+
+/* ------------------------------------------------------------------ */
+/* GMAIL CLIENT SETUP */
+/* ------------------------------------------------------------------ */
 const oAuth2Client = new google.auth.OAuth2(
   env.GMAIL_CLIENT_ID,
   env.GMAIL_CLIENT_SECRET
@@ -29,14 +32,22 @@ const gmail = google.gmail({
   auth: oAuth2Client
 });
 
-/**
- * Create a plain-text email body for an RFP.
- */
-const buildRfpEmailBody = (rfpTitle: string, rfpText: string): string => {
+/* ------------------------------------------------------------------ */
+/* EMAIL BODY BUILDER (CRITICAL FIX HERE) */
+/* ------------------------------------------------------------------ */
+const buildRfpEmailBody = (
+  rfpId: string,
+  rfpTitle: string,
+  rfpText: string
+): string => {
   return `
 Hello,
 
-You are invited to submit a proposal for the following Request for Proposal (RFP):
+You are invited to submit a proposal for the following Request for Proposal (RFP).
+
+==================================================
+RFP-ID: ${rfpId}
+==================================================
 
 Title:
 ${rfpTitle}
@@ -44,16 +55,21 @@ ${rfpTitle}
 Description:
 ${rfpText}
 
-Please reply to this email with your detailed proposal.
+--------------------------------------------------
+IMPORTANT:
+• Please REPLY to this email with your proposal
+• Do NOT remove the RFP-ID from your reply
+• Keep all responses in the same email thread
+--------------------------------------------------
 
 Regards,
 Procurement Team
 `;
 };
 
-/**
- * Send RFP emails to selected vendors.
- */
+/* ------------------------------------------------------------------ */
+/* SEND RFP EMAILS */
+/* ------------------------------------------------------------------ */
 export const sendRfpEmails = async (
   rfpId: string,
   vendorIds: string[]
@@ -80,8 +96,15 @@ export const sendRfpEmails = async (
   const sentEmails: string[] = [];
 
   for (const vendor of vendors) {
-    const subject = `RFP Invitation | ${rfp.title} | RFP-ID:${rfp._id}`;
-    const body = buildRfpEmailBody(rfp.title, rfp.rawText);
+    /* SUBJECT — RFP-ID FIRST FOR RELIABILITY */
+    const subject = `RFP-ID:${rfp._id} | ${rfp.title}`;
+
+    /* BODY — RFP-ID PROMINENTLY EMBEDDED */
+    const body = buildRfpEmailBody(
+      rfp._id.toString(),
+      rfp.title,
+      rfp.rawText
+    );
 
     const message = [
       `To: ${vendor.email}`,
@@ -108,7 +131,9 @@ export const sendRfpEmails = async (
     sentEmails.push(vendor.email);
   }
 
-  // Update RFP status after sending
+  /* ---------------------------------------------------------------- */
+  /* UPDATE RFP STATE */
+  /* ---------------------------------------------------------------- */
   rfp.sentToEmails = sentEmails;
   rfp.sentAt = new Date();
   rfp.status = RfpStatus.SENT;

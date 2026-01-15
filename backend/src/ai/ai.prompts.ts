@@ -82,12 +82,15 @@ ${JSON.stringify(structuredRfp, null, 2)}
 VENDOR PROPOSALS:
 ${JSON.stringify(proposals, null, 2)}
 
-Evaluate each proposal.
+Evaluate all proposals carefully.
 
 Return JSON in this EXACT shape:
 
 {
   "recommendedVendorId": "string",
+
+  "overallReasoning": "string",
+
   "scores": [
     {
       "vendorId": "string",
@@ -98,8 +101,10 @@ Return JSON in this EXACT shape:
 }
 
 Rules:
-- Score must be between 0 and 100
-- Reasoning must justify score
-- Pick ONE recommendedVendorId
-- Do NOT hallucinate data
+- overallReasoning must clearly explain WHY the recommended vendor was chosen over others.
+- Scores must be between 0 and 100.
+- reasoning should explain each vendor's strengths/weaknesses.
+- Pick ONE recommendedVendorId.
+- Do NOT hallucinate data.
 `;
+

@@ -9,15 +9,18 @@ export interface RfpDocument extends Document {
   vendorIds: string[];
   sentToEmails: string[];
   sentAt?: Date;
-  evaluationResult?: {
-    recommendedVendorId: string;
-    scores: {
-      vendorId: string;
-      score: number;
-      reasoning: string;
-    }[];
-    evaluatedAt: Date;
-  };
+  evaluationResult: {
+  recommendedVendorId: String,
+  overallReasoning: String,
+  scores: [
+    {
+      vendorId: String,
+      score: Number,
+      reasoning: String
+    }
+  ],
+  evaluatedAt: Date
+}
   createdAt: Date;
   updatedAt: Date;
 }

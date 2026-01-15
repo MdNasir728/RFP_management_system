@@ -49,6 +49,7 @@ export const validateEvaluationResult = (data: any) => {
   if (
     !data ||
     typeof data.recommendedVendorId !== "string" ||
+    typeof data.overallReasoning !== "string" ||
     !Array.isArray(data.scores)
   ) {
     throw new Error("Invalid evaluation format");
@@ -56,6 +57,7 @@ export const validateEvaluationResult = (data: any) => {
 
   return {
     recommendedVendorId: data.recommendedVendorId,
+    overallReasoning: data.overallReasoning,
     scores: data.scores
       .filter(
         (s: any) =>

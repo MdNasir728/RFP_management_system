@@ -47,11 +47,14 @@ export const evaluateRfpProposals = async (rfpId: string) => {
 
   rfp.status = RfpStatus.RECOMMENDED;
   rfp.set("evaluationResult", {
-    ...evaluation,
+    recommendedVendorId: evaluation.recommendedVendorId,
+    overallReasoning: evaluation.overallReasoning,
+    scores: evaluation.scores,
     evaluatedAt: new Date()
   });
 
   await rfp.save();
 
   return evaluation;
+
 };

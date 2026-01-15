@@ -27,44 +27,31 @@ export interface Vendor {
   updatedAt: string;
 }
 
-/**
- * RFP types
- */
-export type RfpStatus =
-  | "DRAFT"
-  | "SENT"
-  | "RESPONSES_RECEIVED"
-  | "RECOMMENDED";
-
-export interface StructuredRfp {
-  items?: {
-    name: string;
-    quantity?: number;
-    unitPrice?: number;
-  }[];
-  additionalNotes?: string;
-}
+/* ---------- RFP ---------- */
 
 export interface Rfp {
   _id: string;
   title: string;
   rawText: string;
-  structuredData: StructuredRfp;
-  status: RfpStatus;
+  structuredData: unknown;
+  status: "DRAFT" | "SENT" | "RESPONSES_RECEIVED" | "RECOMMENDED";
   vendorIds: string[];
   sentToEmails: string[];
   sentAt?: string;
+  evaluationResult?: EvaluationResult;
   createdAt: string;
   updatedAt: string;
 }
 
-/**
- * Proposal / Evaluation types
- */
+/* ---------- PROPOSAL ---------- */
+
 export interface ProposalParsedData {
+  pricing?: string | null;
+  deliveryTimeline?: string | null;
+  paymentTerms?: string | null;
+  warranty?: string | null;
   confidence: "LOW" | "MEDIUM" | "HIGH";
   missingFields?: string[];
-  notes?: string;
 }
 
 export interface Proposal {
@@ -75,6 +62,17 @@ export interface Proposal {
   parsedData: ProposalParsedData;
   createdAt: string;
   updatedAt: string;
+}
+
+/* ---------- EVALUATION ---------- */
+
+export interface EvaluationResult {
+  recommendedVendorId: string;
+  scores: {
+    vendorId: string;
+    score: number;
+    reasoning: string;
+  }[];
 }
 
 export interface EvaluationResult {
