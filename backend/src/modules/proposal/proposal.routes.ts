@@ -1,11 +1,16 @@
 import { Router } from "express";
-import { fetchVendorRepliesHandler } from "./proposal.controller";
+import {
+  fetchVendorRepliesHandler,
+  getProposalsHandler
+} from "./proposal.controller";
 
 const router = Router();
 
-/**
- * Proposal routes
- */
-router.post("/fetch-replies", fetchVendorRepliesHandler);
+router.post(
+  "/fetch-replies",
+  fetchVendorRepliesHandler
+);
+
+router.get("/", getProposalsHandler);
 
 export default router;

@@ -1,37 +1,25 @@
-import { Schema, model, Document } from "mongoose";
-import { AiConfidenceLevel } from "../../shared";
+import { Schema, model, Document, Types } from "mongoose";
 
 /**
- * MongoDB document shape for a vendor proposal.
- * Represents a parsed vendor response to an RFP.
+ * Minimal Vendor shape when populated
+ */
+export interface PopulatedVendor {
+  _id: Types.ObjectId;
+  name: string;
+  email: string;
+}
+
+/**
+ * Proposal mongoose document
+ * vendorId can be:
+ * - ObjectId (not populated)
+ * - PopulatedVendor (after populate)
  */
 export interface ProposalDocument extends Document {
   rfpId: string;
-  vendorId: string;
-
-  /**
-   * Raw email body received from vendor.
-   */
+  vendorId: Types.ObjectId | PopulatedVendor;
   rawResponseText: string;
-
-  /**
-   * Structured data parsed by AI.
-   */
-  parsedData: {
-    lineItems?: {
-      name: string;
-      quantity?: number;
-      unitPrice?: number;
-      totalPrice?: number;
-    }[];
-    totalCost?: number;
-    deliveryTimelineDays?: number;
-    paymentTerms?: string;
-    warrantyDetails?: string;
-    confidence: AiConfidenceLevel;
-    missingFields?: string[];
-  };
-
+  parsedData: any;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,9 +32,9 @@ const proposalSchema = new Schema<ProposalDocument>(
       index: true
     },
     vendorId: {
-      type: String,
-      required: true,
-      index: true
+      type: Schema.Types.ObjectId,
+      ref: "Vendor",
+      required: true
     },
     rawResponseText: {
       type: String,
@@ -57,9 +45,7 @@ const proposalSchema = new Schema<ProposalDocument>(
       required: true
     }
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
 
 export const ProposalModel = model<ProposalDocument>(

@@ -1,5 +1,7 @@
+import { Types } from "mongoose";
 import { RfpModel } from "../rfp/rfp.model";
 import { ProposalModel } from "../proposal/proposal.model";
+import { PopulatedVendor } from "../proposal/proposal.model";
 import { RfpStatus } from "../../shared";
 
 /* AI imports */
@@ -16,7 +18,9 @@ import {
 /**
  * Evaluate proposals for an RFP using REAL AI
  */
-export const evaluateRfpProposals = async (rfpId: string) => {
+export const evaluateRfpProposals = async (
+  rfpId: string
+) => {
   const rfp = await RfpModel.findById(rfpId);
   if (!rfp) {
     throw new Error("RFP not found");
@@ -27,17 +31,36 @@ export const evaluateRfpProposals = async (rfpId: string) => {
   }
 
   const proposals = await ProposalModel.find({ rfpId });
-  if (proposals.length === 0) {
-    throw new Error("No proposals found");
+  if (proposals.length < 2) {
+    throw new Error(
+      "At least two proposals are required for evaluation"
+    );
   }
+
+  /**
+   * Normalize vendorId to string
+   * (AI layer must never receive ObjectId / mongoose types)
+   */
+  const normalizedProposals = proposals.map((p) => {
+    let vendorId: string;
+
+    if (p.vendorId instanceof Types.ObjectId) {
+      vendorId = p.vendorId.toString();
+    } else {
+      // populated vendor
+      vendorId = (p.vendorId as PopulatedVendor)._id.toString();
+    }
+
+    return {
+      vendorId,
+      parsedData: p.parsedData
+    };
+  });
 
   const aiResponse = await callOllama(
     buildProposalEvaluationPrompt(
       rfp.structuredData,
-      proposals.map((p) => ({
-        vendorId: p.vendorId,
-        parsedData: p.parsedData
-      }))
+      normalizedProposals
     ),
     SYSTEM_JSON_ONLY_PROMPT
   );
@@ -56,5 +79,4 @@ export const evaluateRfpProposals = async (rfpId: string) => {
   await rfp.save();
 
   return evaluation;
-
 };

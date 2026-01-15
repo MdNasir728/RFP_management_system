@@ -23,38 +23,33 @@ export function RfpCard({ rfp, onRefresh }: RfpCardProps) {
   const [openSend, setOpenSend] = useState(false);
 
   return (
-    <>
-      <Link href={`/rfp/${rfp._id}`} className="block">
-        <div className="rounded-lg border p-4 space-y-3 hover:bg-muted cursor-pointer">
-          {/* Header */}
-          <div className="flex items-start justify-between">
-            <h3 className="font-medium leading-snug">
-              {rfp.title}
-            </h3>
+    <div className="rounded-lg border p-4 space-y-3">
+      {/* Clickable content */}
+      <Link href={`/rfp/${rfp._id}`} className="block space-y-2">
+        <div className="flex items-start justify-between">
+          <h3 className="font-medium leading-snug">
+            {rfp.title}
+          </h3>
+          <Badge className={statusColorMap[rfp.status]}>
+            {rfp.status.replaceAll("_", " ")}
+          </Badge>
+        </div>
 
-            <Badge className={statusColorMap[rfp.status]}>
-              {rfp.status.replaceAll("_", " ")}
-            </Badge>
-          </div>
-
-          <div className="text-sm text-muted-foreground">
-            Created on{" "}
-            {new Date(rfp.createdAt).toLocaleDateString()}
-          </div>
+        <div className="text-sm text-muted-foreground">
+          Created on{" "}
+          {new Date(rfp.createdAt).toLocaleDateString()}
         </div>
       </Link>
 
-      {/* Action outside link */}
+      {/* Action INSIDE card */}
       {rfp.status === "DRAFT" && (
-        <div className="mt-2">
-          <Button
-            size="sm"
-            className="w-full"
-            onClick={() => setOpenSend(true)}
-          >
-            Send to Vendors
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          className="w-full"
+          onClick={() => setOpenSend(true)}
+        >
+          Send to Vendors
+        </Button>
       )}
 
       <SendRfpDialog
@@ -63,6 +58,6 @@ export function RfpCard({ rfp, onRefresh }: RfpCardProps) {
         rfp={rfp}
         onSuccess={onRefresh}
       />
-    </>
+    </div>
   );
 }

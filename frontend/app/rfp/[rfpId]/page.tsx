@@ -5,144 +5,106 @@ import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { apiGet, apiPost, getErrorMessage } from "@/lib/api";
-import {
-  ApiSuccessResponse,
-  Rfp,
-  Proposal,
-  EvaluationResult
-} from "@/types/api.types";
+import { Rfp, Proposal } from "@/types/api.types";
 
 import { RfpDetails } from "@/components/rfp/RfpDetails";
 import { ProposalTable } from "@/components/rfp/ProposalTable";
-import { RecommendationCard } from "@/components/rfp/RecommendationCard";
+import { SendRfpDialog } from "@/components/rfp/SendRfpDialog";
 
 export default function RfpDetailPage() {
   const params = useParams();
   const rfpId = params?.rfpId as string;
 
-
   const [rfp, setRfp] = useState<Rfp | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [evaluation, setEvaluation] =
-    useState<EvaluationResult | null>(null);
-
-  const [loadingReplies, setLoadingReplies] = useState(false);
-  const [loadingEvaluation, setLoadingEvaluation] =
-    useState(false);
-
-  /* ---------------- FETCH RFP ---------------- */
+  const [openSend, setOpenSend] = useState(false);
 
   const fetchRfp = async () => {
     try {
-      const res =
-        await apiGet<ApiSuccessResponse<Rfp>>(
-          `/rfps/${rfpId}`
-        );
-      setRfp(res.data);
-      setEvaluation(
-        res.data.evaluationResult || null
+      const res = await apiGet<{ data: Rfp }>(
+        `/rfps/${rfpId}`
       );
+      setRfp(res.data);
     } catch (err) {
       toast.error(getErrorMessage(err));
     }
   };
 
-  /* ---------------- FETCH PROPOSALS (MANUAL) ---------------- */
+  const fetchProposals = async () => {
+    try {
+      const res = await apiGet<{ data: Proposal[] }>(
+        `/proposals?rfpId=${rfpId}`
+      );
+      setProposals(res.data);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
 
   const fetchVendorReplies = async () => {
     try {
-      setLoadingReplies(true);
       toast.info("Fetching vendor replies...");
-
-      const res =
-        await apiPost<
-          ApiSuccessResponse<{ proposals: Proposal[] }>
-        >("/proposals/fetch-replies");
-
-      setProposals(res.data.proposals || []);
-      toast.success("Vendor replies fetched");
-      fetchRfp();
+      await apiPost("/proposals/fetch-replies");
+      await fetchProposals();
+      await fetchRfp();
+      toast.success("Replies fetched");
     } catch (err) {
       toast.error(getErrorMessage(err));
-    } finally {
-      setLoadingReplies(false);
     }
   };
 
-  /* ---------------- EVALUATE PROPOSALS ---------------- */
-
-  const evaluateProposals = async () => {
+  const evaluate = async () => {
     try {
-      setLoadingEvaluation(true);
-      toast.info("Evaluating proposals using AI...");
-
-      const res =
-        await apiPost<ApiSuccessResponse<EvaluationResult>>(
-          `/evaluation/${rfpId}`
-        );
-
-      setEvaluation(res.data);
-      toast.success("AI recommendation generated");
-      fetchRfp();
+      toast.info("Evaluating proposals...");
+      await apiPost(`/evaluation/${rfpId}`);
+      await fetchRfp();
+      toast.success("Evaluation completed");
     } catch (err) {
       toast.error(getErrorMessage(err));
-    } finally {
-      setLoadingEvaluation(false);
     }
   };
 
   useEffect(() => {
     fetchRfp();
+    fetchProposals();
   }, [rfpId]);
 
-  if (!rfp) {
-    return (
-      <div className="text-sm text-muted-foreground">
-        Loading RFP details...
-      </div>
-    );
-  }
+  if (!rfp) return null;
 
   return (
     <div className="space-y-6">
-      {/* RFP DETAILS */}
       <RfpDetails rfp={rfp} />
 
-      {/* ACTION BUTTONS */}
-      <div className="flex flex-wrap gap-3">
-        {rfp.status === "SENT" && (
-          <Button
-            onClick={fetchVendorReplies}
-            disabled={loadingReplies}
-          >
-            {loadingReplies
-              ? "Fetching Replies..."
-              : "Fetch Vendor Replies"}
+      {/* Actions */}
+      <div className="flex gap-3">
+        {rfp.status === "DRAFT" && (
+          <Button onClick={() => setOpenSend(true)}>
+            Send to Vendors
           </Button>
         )}
 
-        {rfp.status === "RESPONSES_RECEIVED" && (
-          <Button
-            onClick={evaluateProposals}
-            disabled={loadingEvaluation}
-          >
-            {loadingEvaluation
-              ? "Evaluating..."
-              : "Evaluate Proposals"}
+        {rfp.status === "SENT" && (
+          <Button onClick={fetchVendorReplies}>
+            Fetch Vendor Replies
           </Button>
         )}
+
+        {rfp.status === "RESPONSES_RECEIVED" &&
+          proposals.length >= 2 && (
+            <Button onClick={evaluate}>
+              Evaluate Proposals
+            </Button>
+          )}
       </div>
 
-      {/* PROPOSALS TABLE */}
-      <ProposalTable
-        proposals={proposals}
-        evaluation={evaluation}
+      <SendRfpDialog
+        open={openSend}
+        onOpenChange={setOpenSend}
+        rfp={rfp}
+        onSuccess={fetchRfp}
       />
 
-      {/* AI RECOMMENDATION */}
-      {evaluation && (
-        <RecommendationCard evaluation={evaluation} />
-      )}
+      <ProposalTable proposals={proposals} />
     </div>
   );
 }

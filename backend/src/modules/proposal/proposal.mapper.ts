@@ -1,22 +1,50 @@
-import { Proposal } from "../../shared";
-import { ProposalDocument } from "./proposal.model";
+import { Types } from "mongoose";
+import {
+  ProposalDocument,
+  PopulatedVendor
+} from "./proposal.model";
 
 /**
- * Maps a MongoDB Proposal document to a domain-safe Proposal object.
- * Converts ObjectId and Date fields into API-friendly types.
+ * Type guard to check populated vendor
+ */
+const isPopulatedVendor = (
+  vendor: ProposalDocument["vendorId"]
+): vendor is PopulatedVendor => {
+  return (
+    typeof vendor === "object" &&
+    vendor !== null &&
+    !(
+      vendor instanceof Types.ObjectId
+    )
+  );
+};
+
+/**
+ * Convert Proposal mongoose document into API-safe object
  */
 export const mapProposalDocumentToProposal = (
   doc: ProposalDocument
-): Proposal => {
-  const obj = doc.toObject();
+) => {
+  const vendor = isPopulatedVendor(doc.vendorId)
+    ? {
+        _id: doc.vendorId._id.toString(),
+        name: doc.vendorId.name,
+        email: doc.vendorId.email
+      }
+    : undefined;
+
+  const vendorId = isPopulatedVendor(doc.vendorId)
+    ? doc.vendorId._id.toString()
+    : doc.vendorId.toString();
 
   return {
-    _id: obj._id.toString(),
-    rfpId: obj.rfpId,
-    vendorId: obj.vendorId,
-    rawResponseText: obj.rawResponseText,
-    parsedData: obj.parsedData,
-    createdAt: obj.createdAt.toISOString(),
-    updatedAt: obj.updatedAt.toISOString()
+    _id: doc._id.toString(),
+    rfpId: doc.rfpId,
+    vendorId,
+    vendor,
+    rawResponseText: doc.rawResponseText,
+    parsedData: doc.parsedData,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString()
   };
 };

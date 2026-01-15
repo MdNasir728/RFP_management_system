@@ -159,3 +159,16 @@ export const fetchVendorRepliesAndCreateProposals =
     return created;
   };
 
+/**
+ * Get all proposals for a specific RFP
+ */
+export const getProposalsByRfpId = async (
+  rfpId: string
+) => {
+  return ProposalModel.find({ rfpId })
+    .populate({
+      path: "vendorId",
+      select: "name email"
+    })
+    .sort({ createdAt: 1 });
+};
