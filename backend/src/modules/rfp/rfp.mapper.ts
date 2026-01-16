@@ -1,23 +1,38 @@
-import { Rfp } from "../../shared";
 import { RfpDocument } from "./rfp.model";
 
 /**
- * Maps a MongoDB RFP document to a domain-safe RFP object.
- * Converts ObjectId and Date fields into API-friendly types.
+ * Map RFP mongoose document to API-safe object
  */
-export const mapRfpDocumentToRfp = (doc: RfpDocument): Rfp => {
-  const obj = doc.toObject();
-
+export const mapRfpDocumentToRfp = (
+  doc: RfpDocument
+) => {
   return {
-    _id: obj._id.toString(),
-    title: obj.title,
-    rawText: obj.rawText,
-    structuredData: obj.structuredData,
-    status: obj.status,
-    vendorIds: obj.vendorIds,
-    sentToEmails: obj.sentToEmails,
-    sentAt: obj.sentAt ? obj.sentAt.toISOString() : undefined,
-    createdAt: obj.createdAt.toISOString(),
-    updatedAt: obj.updatedAt.toISOString()
+    _id: doc._id.toString(),
+    title: doc.title,
+    rawText: doc.rawText,
+    structuredData: doc.structuredData,
+    status: doc.status,
+
+    vendorIds: doc.vendorIds ?? [],
+    sentToEmails: doc.sentToEmails ?? [],
+    sentAt: doc.sentAt
+      ? doc.sentAt.toISOString()
+      : undefined,
+
+    // 🔥 CRITICAL FIX — INCLUDE EVALUATION
+    evaluationResult: doc.evaluationResult
+      ? {
+          recommendedVendorId:
+            doc.evaluationResult.recommendedVendorId,
+          overallReasoning:
+            doc.evaluationResult.overallReasoning,
+          scores: doc.evaluationResult.scores,
+          evaluatedAt:
+            doc.evaluationResult.evaluatedAt?.toISOString()
+        }
+      : undefined,
+
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString()
   };
 };

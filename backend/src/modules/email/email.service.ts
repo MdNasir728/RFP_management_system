@@ -49,17 +49,11 @@ You are invited to submit a proposal for the following Request for Proposal (RFP
 RFP-ID: ${rfpId}
 ==================================================
 
-Title:
-${rfpTitle}
-
-Description:
 ${rfpText}
 
 --------------------------------------------------
 IMPORTANT:
 • Please REPLY to this email with your proposal
-• Do NOT remove the RFP-ID from your reply
-• Keep all responses in the same email thread
 --------------------------------------------------
 
 Regards,

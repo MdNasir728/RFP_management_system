@@ -165,10 +165,12 @@ export const fetchVendorRepliesAndCreateProposals =
 export const getProposalsByRfpId = async (
   rfpId: string
 ) => {
-  return ProposalModel.find({ rfpId })
+  const proposals = await ProposalModel.find({ rfpId })
     .populate({
       path: "vendorId",
       select: "name email"
     })
     .sort({ createdAt: 1 });
+
+  return proposals.map(mapProposalDocumentToProposal);
 };
