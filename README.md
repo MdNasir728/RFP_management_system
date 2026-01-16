@@ -61,12 +61,12 @@ GMAIL_REFRESH_TOKEN=
 # Ollama (Local AI)
 OLLAMA_API_URL=http://localhost:11434
 OLLAMA_MODEL=mistral
-
+```
 
 ### Frontend — `frontend/.env.example`
-
+```
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
-
+```
 ## 🔐 Gmail API Setup (Step-by-Step)
 
 ### 1️⃣ Create Google Cloud Project
@@ -93,16 +93,17 @@ Run the script:
 ```bash
 cd backend
 ts-node scripts/generateGmailRefreshToken.ts
+```
 
-Steps:
+### Steps:
 
-Open the printed authorization URL
+-Open the printed authorization URL
 
-Log in and allow Gmail access
+-Log in and allow Gmail access
 
-Copy the generated refresh token
+-Copy the generated refresh token
 
-Paste it into GMAIL_REFRESH_TOKEN in .env
+-Paste it into GMAIL_REFRESH_TOKEN in .env
 
 ## 🤖 Ollama + Mistral Setup (Local AI)
 
@@ -110,31 +111,35 @@ Paste it into GMAIL_REFRESH_TOKEN in .env
 Download Ollama from:
 ```text
 https://ollama.com
-
+```
 ### Pull mistral
+```bash
 ollama pull mistral
-
+```
 ### Run ollama 
+```bash
 ollama serve
-
+```
 ### Verify Ollama running
+```text
 Curl http://localhost:11434
-
+```
 
 ## Run project locally
 
 ### Backend
 
+```bash
 cd backend
 npm install
 npm run dev
-
+```
 ### Frontend
-
+```bash
 cd frontend
 npm install
 npm run dev
-
+```
 
 ## 🛡️ Edge Case Handling
 
