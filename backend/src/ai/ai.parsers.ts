@@ -1,3 +1,5 @@
+import e from "express";
+
 export const parseJsonStrict = <T>(raw: string): T => {
   if (!raw || typeof raw !== "string") {
     throw new Error("Empty AI response");
@@ -43,9 +45,23 @@ export const validateParsedProposal = (data: any) => {
   };
 };
 
+interface evaluation {
+  recommendedVendorId: string,
+
+  overallReasoning: string,
+
+  scores: [
+    {
+      vendorId: string,
+      score: number,
+      reasoning: string
+    }
+  ]
+}
+
 /* ---------- Evaluation Validation ---------- */
 
-export const validateEvaluationResult = (data: any) => {
+export const validateEvaluationResult = (data: evaluation) => {
   if (
     !data ||
     typeof data.recommendedVendorId !== "string" ||
@@ -60,12 +76,12 @@ export const validateEvaluationResult = (data: any) => {
     overallReasoning: data.overallReasoning,
     scores: data.scores
       .filter(
-        (s: any) =>
+        (s: evaluation["scores"][0]) =>
           typeof s.vendorId === "string" &&
           typeof s.score === "number" &&
           typeof s.reasoning === "string"
       )
-      .map((s: any) => ({
+      .map((s: evaluation["scores"][0]) => ({
         vendorId: s.vendorId,
         score: Math.min(100, Math.max(0, s.score)),
         reasoning: s.reasoning

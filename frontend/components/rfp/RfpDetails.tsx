@@ -101,9 +101,6 @@ export function RfpDetails({ rfp, proposals }: RfpDetailsProps) {
               AI Recommendation
             </h3>
 
-            <p className="text-sm">
-              {evaluation.overallReasoning}
-            </p>
 
             <div className="mt-2 text-sm">
               <strong>Recommended Vendor:</strong>
@@ -114,6 +111,9 @@ export function RfpDetails({ rfp, proposals }: RfpDetailsProps) {
                 {recommendedVendor.email}
               </div>
             </div>
+            <p className="text-sm">
+              {evaluation.overallReasoning}
+            </p>
           </section>
         )}
       </CardContent>

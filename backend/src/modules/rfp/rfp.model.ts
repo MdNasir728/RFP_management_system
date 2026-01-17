@@ -40,6 +40,7 @@ const rfpSchema = new Schema<RfpDocument>(
     sentAt: Date,
     evaluationResult: {
       recommendedVendorId: String,
+      overallReasoning: String,
       scores: [
         {
           vendorId: String,

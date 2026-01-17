@@ -65,7 +65,17 @@ export const evaluateRfpProposals = async (
     SYSTEM_JSON_ONLY_PROMPT
   );
 
-  const parsed = parseJsonStrict<any>(aiResponse);
+  const parsed = parseJsonStrict<{
+    recommendedVendorId: string,
+    overallReasoning: string,
+    scores: [
+      {
+        vendorId: string,
+        score: number,
+        reasoning: string
+      }
+    ]
+  }>(aiResponse);
   const evaluation = validateEvaluationResult(parsed);
 
   rfp.status = RfpStatus.RECOMMENDED;

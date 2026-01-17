@@ -74,5 +74,6 @@ export const getRfpById = async (
   rfpId: string
 ): Promise<Rfp | null> => {
   const rfp = await RfpModel.findById(rfpId);
+  console.log(rfp)
   return rfp ? mapRfpDocumentToRfp(rfp) : null;
 };
